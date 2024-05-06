@@ -67,10 +67,9 @@ public abstract class AbstractWebTest {
             }
         }
 
-
         for (var drive : drivers) {
             drive.manage().window().setSize(new Dimension(1280,720));
-            drive.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+            drive.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
         }
     }
 

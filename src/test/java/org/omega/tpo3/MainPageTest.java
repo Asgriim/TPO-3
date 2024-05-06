@@ -4,15 +4,18 @@ import org.junit.jupiter.api.*;
 
 import org.omega.tpo3.pages.MainPage;
 import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.openqa.selenium.support.ui.ExpectedConditions.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class MainPageTest extends AbstractWebTest{
-    private List<MainPage> mainPageList = new ArrayList<>();
+    private final List<MainPage> mainPageList = new ArrayList<>();
 
     @BeforeAll
     public void init() {
@@ -83,7 +86,9 @@ public class MainPageTest extends AbstractWebTest{
             page.endCostInput.sendKeys(Constants.FILTER_END_COST);
             page.submitCostFilterButton.click();
             page.getWait().until(visibilityOf(page.filterChoiceList));
-            Thread.sleep(1000);
+
+            page.getWait().until(invisibilityOf(page.linkToItemCard));
+//            Thread.sleep(1000);
 
             List<WebElement> costsOnPage = page.getCostsOnPage();
             for (var element : costsOnPage) {

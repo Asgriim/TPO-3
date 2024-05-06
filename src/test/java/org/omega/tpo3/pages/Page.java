@@ -46,8 +46,8 @@ public abstract class Page {
         return driver.findElements(By.xpath("//a[@class='product-card__link j-card-link j-open-full-product-card']"));
     }
 
-
     public void clickOnElement(WebElement element) {
+        wait.
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("arguments[0].click();", element);
     }

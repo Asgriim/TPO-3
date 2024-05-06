@@ -5,19 +5,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.omega.tpo3.pages.SearchPage;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.html5.WebStorage;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.openqa.selenium.support.ui.ExpectedConditions.invisibilityOf;
-import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOf;
 
 public class FilterTests extends AbstractWebTest {
     private final List<SearchPage> searchPageList = new ArrayList<>();
@@ -58,21 +54,11 @@ public class FilterTests extends AbstractWebTest {
     @Test
     public void checkCostFilterList() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.costFilterButton));
-            page.costFilterButton.click();
+            page.setCostRangeFilter(Constants.FILTER_START_COST, Constants.FILTER_END_COST);
 
-            page.getWait().until(visibilityOf(page.startCostInput));
-            page.startCostInput.clear();
-            page.startCostInput.sendKeys(Constants.FILTER_START_COST);
-            page.endCostInput.clear();
-            page.endCostInput.sendKeys(Constants.FILTER_END_COST);
-            page.submitCostFilterButton.click();
+            page.waitDeleteBucketButtonInvisible();
 
-            page.getWait().until(visibilityOf(page.filterChoiceList));
-            Thread.sleep(1000);
-
-            List<WebElement> elementList = page.getChilds(page.filterChoiceList);
-            String firstChoice = elementList.get(0).getText();
+            String firstChoice = page.getFilterChoiceListElement(0);
             String regex = "(\\d+)\\s*до\\s*(\\d+)";
 
             Pattern pattern = Pattern.compile(regex);
@@ -93,21 +79,13 @@ public class FilterTests extends AbstractWebTest {
     @Test
     public void checkCostFilterListFail() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.costFilterButton));
-            page.costFilterButton.click();
 
-            page.getWait().until(visibilityOf(page.startCostInput));
-            page.startCostInput.clear();
-            page.startCostInput.sendKeys(Constants.FILTER_START_COST_FAIL);
-            page.endCostInput.clear();
-            page.endCostInput.sendKeys(Constants.FILTER_END_COST_FAIL);
-            page.submitCostFilterButton.click();
+            page.setCostRangeFilter(Constants.FILTER_START_COST_FAIL, Constants.FILTER_END_COST_FAIL);
 
-            page.getWait().until(visibilityOf(page.filterChoiceList));
-            Thread.sleep(1000);
+            page.waitDeleteBucketButtonInvisible();
 
-            List<WebElement> elementList = page.getChilds(page.filterChoiceList);
-            String firstChoice = elementList.get(0).getText();
+
+            String firstChoice = page.getFilterChoiceListElement(0);
             String regex = "(\\d+)\\s*до\\s*(\\d+)";
 
             Pattern pattern = Pattern.compile(regex);
@@ -130,17 +108,14 @@ public class FilterTests extends AbstractWebTest {
     @Test
     public void checkCategoryUnselect() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
+            page.clickFilterCategoryButton();
 
             page.clickOnFilterCheckbox("Блокнот");
             Thread.sleep(500);
             page.clickOnFilterCheckboxSelected("Блокнот");
-            page.getWait().until(invisibilityOf(page.filterCategoryNotebookButtonSelected));
 
-            List<WebElement> elementList = page.getChilds(page.filterChoiceList);
-            assertThat(elementList.size())
+            page.waitForFilterCategoryNotebookButtonSelectedInVisibility();
+            assertThat(page.getFilterChoiceListSize())
                     .isEqualTo(1);
         }
 
@@ -150,18 +125,14 @@ public class FilterTests extends AbstractWebTest {
     @Test
     public void checkMultipleCategorySelect() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
+            page.clickFilterCategoryButton();
             page.clickOnFilterCheckbox("Блокнот");
             page.clickOnFilterCheckbox("Брелок");
 
-            page.getWait().until(visibilityOf(page.filterChoiceList));
-            List<WebElement> elementList = page.getChilds(page.filterChoiceList);
+            page.waitFilterChoiceListVisible();
 
 
-            assertThat(elementList.size())
+            assertThat(page.getFilterChoiceListSize())
                     .isEqualTo(3);
         }
 
@@ -171,37 +142,30 @@ public class FilterTests extends AbstractWebTest {
     @Test
     public void goslingCharmSelect() {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
-            page.getWait().until(visibilityOf(page.filterChoiceCharm));
             page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            page.getWait().until(visibilityOf(page.filterChoiceList));
-            List<WebElement> childs = page.getChilds(page.filterChoiceList);
-            assertThat(childs.size())
-                    .isEqualTo(2);
+
+            page.waitFilterChoiceListVisible();
+            assertThat(page.getFilterChoiceListElement(0)).contains(Constants.FILTER_CATEGORY_CHOICE_CHARM);
         }
     }
 
     @Test
     void resetChoices()  {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
-            page.getWait().until(visibilityOf(page.filterChoiceCharm));
             page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            page.getWait().until(visibilityOf(page.filterChoiceList));
-            page.resetChoicesButton.click();
 
-            page.getWait().until(invisibilityOf(page.filterCategoryNotebookButtonSelected));
+            page.waitFilterChoiceListVisible();
 
-            List<WebElement> childs = page.getChilds(page.filterChoiceList);
-            assertThat(childs.size())
+            page.clickResetFilterChoicesButton();
+
+            page.waitForFilterCategoryNotebookButtonSelectedInVisibility();
+
+
+            assertThat(page.getFilterChoiceListSize())
                     .isEqualTo(1);
         }
     }
@@ -210,22 +174,15 @@ public class FilterTests extends AbstractWebTest {
     @Test
     void checkTShirtCard() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
+            page.inputToFilterSearch(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
+            page.clickOnFilterCheckBox(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
 
-            page.filterSearchInput.sendKeys(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
-            WebElement element = page.getFilterCheckboxElement(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
-            page.getWait().until(visibilityOf(element));
+            page.waitForFilterCategoryNotebookButtonSelectedInVisibility();
 
-            page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
-
-            Thread.sleep(500);
-            List<WebElement> productCards = page.getProductCards();
-            page.clickOnElement(productCards.get(0));
-            page.getWait().until(visibilityOf(page.nameOfItem));
-            String text = page.nameOfItem.getText();
+            page.clickOnProductCard(0);
+            String text = page.getNameOfCurrentItem();
 
             assertThat(text.toLowerCase()).contains(Constants.FILTER_CATEGORY_CHOICE_TSHIRT.toLowerCase());
         }
@@ -234,22 +191,16 @@ public class FilterTests extends AbstractWebTest {
     @Test
     void checkCategorySearch() {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
+            page.inputToFilterSearch(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
+            page.clickOnFilterCheckBox(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
 
-            page.filterSearchInput.sendKeys(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
-            WebElement element = page.getFilterCheckboxElement(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
-            page.getWait().until(visibilityOf(element));
+            page.waitFilterChoiceListVisible();
 
-            page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
 
-            page.getWait().until(visibilityOf(page.filterChoiceList));
 
-            List<WebElement> elementList = page.getChilds(page.filterChoiceList);
-
-            assertThat(elementList.get(0).getText().toLowerCase()).contains(Constants.FILTER_CATEGORY_CHOICE_TSHIRT.toLowerCase());
+            assertThat(page.getFilterChoiceListElement(0).toLowerCase()).contains(Constants.FILTER_CATEGORY_CHOICE_TSHIRT.toLowerCase());
 
         }
     }
@@ -259,104 +210,66 @@ public class FilterTests extends AbstractWebTest {
     void checkBacketItems() throws InterruptedException {
         for (var page : searchPageList) {
 
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
-            page.getWait().until(visibilityOf(page.filterChoiceCharm));
             page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            page.getWait().until(visibilityOf(page.filterChoiceList));
-
-            List<WebElement> productCards = page.getDriver().findElements(By.xpath("//a[@class='product-card__add-basket j-add-to-basket btn-main']"));
-            page.getWait().until(visibilityOf(productCards.get(0)));
+            page.waitFilterChoiceListVisible();
 
             for (int i = 0; i < Constants.BACKET_ITEMS_SELECTED; i++) {
-                WebElement card = productCards.get(i);
-                page.clickOnElement(card);
-                Thread.sleep(100);
+                page.addItemToBacket(i);
             }
 
             page.getDriver().get(Constants.URL_BACKET);
-            page.getWait().until(visibilityOf(page.backetGoodsNumber));
-            String regex = "\\d+";
+            page.waitForBacketGoodsNumberVisible();
 
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(page.backetGoodsNumber.getText());
-            if (matcher.find()) {
-                String numberStr = matcher.group();
-                int number = Integer.parseInt(numberStr);
-                assertThat(number).isEqualTo(Constants.BACKET_ITEMS_SELECTED);
-            }
+            assertThat(page.getBacketGoodsNumbers()).isEqualTo(Constants.BACKET_ITEMS_SELECTED);
         }
     }
 
     @Test
     void pickTShirtSize() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
-            page.filterSearchInput.sendKeys(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
-            WebElement element = page.getFilterCheckboxElement(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
-            page.getWait().until(visibilityOf(element));
-
-            page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
+            page.inputToFilterSearch(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
+            page.clickOnFilterCheckBox(Constants.FILTER_CATEGORY_CHOICE_TSHIRT);
             Thread.sleep(500);
 
-            List<WebElement> productCards = page.getDriver().findElements(By.xpath("//a[@class='product-card__add-basket j-add-to-basket btn-main']"));
-            page.getWait().until(visibilityOf(productCards.get(0)));
+            page.addItemToBacket(0);
 
-            page.clickOnElement(productCards.get(0));
+            page.pickTShirtSizeLabel(Constants.TSHIRT_SIZE);
 
-            page.getWait().until(visibilityOf(page.choiceTShirtSizeLabel));
-            page.clickOnElement(page.choiceTShirtSizeLabel);
             page.getDriver().get(Constants.URL_BACKET);
-
-            WebElement itemProps = page.getDriver().findElement(By.xpath("//div[@class='good-info__properties ']"));
-            page.getWait().until(visibilityOf(itemProps));
-
-            String itemPropsText = itemProps.getText();
+            String itemPropsText = page.getItemsProps();
             assertThat(itemPropsText).contains(Constants.TSHIRT_SIZE);
-//            page.clickOnElement(page.deleteBucketButton);
         }
     }
 
     @Test
     void checkBucketDeclination() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
-            page.filterSearchInput.sendKeys(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            WebElement element = page.getFilterCheckboxElement(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            page.getWait().until(visibilityOf(element));
+            page.inputToFilterSearch(Constants.FILTER_CATEGORY_CHOICE_CHARM);
 
             page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            Thread.sleep(500);
+            page.waitDeleteBucketButtonInvisible();
+//            Thread.sleep(500);
 
-            List<WebElement> productCards = page.getDriver().findElements(By.xpath("//a[@class='product-card__add-basket j-add-to-basket btn-main']"));
-            page.getWait().until(visibilityOf(productCards.get(0)));
-
-            page.clickOnElement(productCards.get(0));
-            Thread.sleep(500);
+            page.addItemToBacket(0);
 
             page.getDriver().get(Constants.URL_BACKET);
-            page.getWait().until(visibilityOf(page.backetGoodsNumber));
+            page.waitForBacketGoodsNumberVisible();
 
             assertThat(page.backetGoodsNumber.getText()).contains("товар");
 
-            page.clickOnElement(page.bucketPlusButton);
+            page.clickOnBacketPlusButton();
 
             assertThat(page.backetGoodsNumber.getText()).contains("товара");
 
-            page.clickOnElement(page.bucketPlusButton);
-            page.clickOnElement(page.bucketPlusButton);
-            page.clickOnElement(page.bucketPlusButton);
+            page.clickOnBacketPlusButton();
+            page.clickOnBacketPlusButton();
+            page.clickOnBacketPlusButton();
 
             assertThat(page.backetGoodsNumber.getText()).contains("товаров");
 
@@ -366,29 +279,20 @@ public class FilterTests extends AbstractWebTest {
     @Test
     void checkBucketCostCalc() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
-            page.filterSearchInput.sendKeys(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            WebElement element = page.getFilterCheckboxElement(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            page.getWait().until(visibilityOf(element));
+            page.inputToFilterSearch(Constants.FILTER_CATEGORY_CHOICE_CHARM);
 
             page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            Thread.sleep(500);
+            page.waitDeleteBucketButtonInvisible();
 
-            List<WebElement> productCards = page.getDriver().findElements(By.xpath("//a[@class='product-card__add-basket j-add-to-basket btn-main']"));
-            page.getWait().until(visibilityOf(productCards.get(0)));
-
-            page.clickOnElement(productCards.get(0));
-            Thread.sleep(500);
+            page.addItemToBacket(0);
+            page.waitDeleteBucketButtonInvisible();
+//            Thread.sleep(500);
 
             page.getDriver().get(Constants.URL_BACKET);
-            page.getWait().until(visibilityOf(page.backetGoodsNumber));
-
-
-            Thread.sleep(1000);
+            page.waitForBacketGoodsNumberVisible();
+            page.waitForEndCostInputInvisibility();
 
             String costOfBucketText = page.costOfBucket.getText();
             System.out.println(costOfBucketText);
@@ -396,7 +300,8 @@ public class FilterTests extends AbstractWebTest {
             int costOfBucket = Integer.parseInt(costOfBucketText);
 
             page.clickOnElement(page.bucketPlusButton);
-            Thread.sleep(2000);
+            page.waitForEndCostInputInvisibility();
+//            Thread.sleep(2000);
 
             costOfBucketText = page.costOfBucket.getText();
             costOfBucketText = costOfBucketText.replace("₽", "").strip();
@@ -409,80 +314,52 @@ public class FilterTests extends AbstractWebTest {
     @Test
     void checkItemsIncrease() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
-            page.filterSearchInput.sendKeys(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            WebElement element = page.getFilterCheckboxElement(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            page.getWait().until(visibilityOf(element));
+            page.inputToFilterSearch(Constants.FILTER_CATEGORY_CHOICE_CHARM);
 
             page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            Thread.sleep(500);
 
-            List<WebElement> productCards = page.getDriver().findElements(By.xpath("//a[@class='product-card__add-basket j-add-to-basket btn-main']"));
-            page.getWait().until(visibilityOf(productCards.get(0)));
+            page.waitDeleteBucketButtonInvisible();
 
-            page.clickOnElement(productCards.get(0));
-            Thread.sleep(500);
+            page.addItemToBacket(0);
+
+            page.waitDeleteBucketButtonInvisible();
 
             page.getDriver().get(Constants.URL_BACKET);
 
             page.waitForPageToLoad();
-            page.getWait().until(visibilityOf(page.backetGoodsNumber));
-            String regex = "\\d+";
+            page.waitForBacketGoodsNumberVisible();
 
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(page.backetGoodsNumber.getText());
-            if (matcher.find()) {
-                String numberStr = matcher.group();
-                int number = Integer.parseInt(numberStr);
-                assertThat(number).isEqualTo(1);
-            }
+            assertThat(page.getBacketGoodsNumbers()).isEqualTo(1);
 
-            page.clickOnElement(page.bucketPlusButton);
+            page.clickOnBacketPlusButton();
 
-            matcher = pattern.matcher(page.backetGoodsNumber.getText());
-            if (matcher.find()) {
-                String numberStr = matcher.group();
-                int number = Integer.parseInt(numberStr);
-                assertThat(number).isEqualTo(2);
-            }
+            assertThat(page.getBacketGoodsNumbers()).isEqualTo(2);
         }
     }
 
     @Test
     void checkDeleteAllInBucket() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
+            page.clickFilterCategoryButton();
 
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
-            page.filterSearchInput.sendKeys(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            WebElement element = page.getFilterCheckboxElement(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            page.getWait().until(visibilityOf(element));
+            page.inputToFilterSearch(Constants.FILTER_CATEGORY_CHOICE_CHARM);
 
             page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_CHARM);
-            Thread.sleep(500);
+            page.waitDeleteBucketButtonInvisible();
 
-            List<WebElement> productCards = page.getDriver().findElements(By.xpath("//a[@class='product-card__add-basket j-add-to-basket btn-main']"));
-            page.getWait().until(visibilityOf(productCards.get(0)));
-
-            page.clickOnElement(productCards.get(0));
-            Thread.sleep(500);
+            page.addItemToBacket(0);
 
             page.getDriver().get(Constants.URL_BACKET);
 
+            page.waitDeleteBucketButtonInvisible();
+
             page.waitForPageToLoad();
 
-            page.clickOnElement(page.deleteBucketButton);
+            page.clickOnDeleteBucketButton();
 
-            WebElement header = page.getDriver().findElement(By.xpath("//h1[@class='section-header basket-empty__title']"));
-
-            page.getWait().until(visibilityOf(header));
-            assertThat(header.getText()).contains("пусто");
+            assertThat(page.getBucketHeader()).contains("пусто");
 
         }
     }
@@ -491,36 +368,19 @@ public class FilterTests extends AbstractWebTest {
     @Test
     void checkNotebookClass() throws InterruptedException {
         for (var page : searchPageList) {
-            page.getWait().until(visibilityOf(page.filterCategoryButton));
-
-            page.filterCategoryButton.click();
-            page.getWait().until(visibilityOf(page.filterFrame));
-
-            page.filterSearchInput.sendKeys(Constants.FILTER_CATEGORY_CHOICE_NOTEBOOK);
-            WebElement element = page.getFilterCheckboxElement(Constants.FILTER_CATEGORY_CHOICE_NOTEBOOK);
-            page.getWait().until(visibilityOf(element));
-
+            page.clickFilterCategoryButton();
             page.clickOnFilterCheckbox(Constants.FILTER_CATEGORY_CHOICE_NOTEBOOK);
-            Thread.sleep(500);
+            page.waitDeleteBucketButtonInvisible();
 
-            page.clickOnElement(page.allFiltersButton);
+            page.clickOnAllFiltersButton();
 
-            WebElement checkbox = page.getFilterCheckboxElement("в точку");
-            page.getWait().until(visibilityOf(checkbox));
-            page.clickOnElement(checkbox);
-            Thread.sleep(1000);
+            page.waitDeleteBucketButtonInvisible();
 
-            List<WebElement> productCards = page.getProductCards();
-
-            page.clickOnElement(productCards.get(0));
+            page.clickOnProductCard(0);
             page.waitForPageToLoad();
+            page.getWait().until(invisibilityOf(page.deleteBucketButton));
 
-            List<WebElement> params = page.getDriver().findElements(By.xpath("//td[@class='product-params__cell']"));
-            page.getWait().until(visibilityOf(params.get(0)));
-
-            String collect = params.stream().map(WebElement::getText).collect(Collectors.joining());
-
-            assertThat(collect).contains("в точку");
+            assertThat(page.getItemsParams()).contains("в точку");
 
         }
     }
